@@ -1,0 +1,7 @@
+"sample_id","condition","age"
+"healthy_sample_1","Healthy",45
+"healthy_sample_2","Healthy",52
+"healthy_sample_3","Healthy",48
+"cancer_sample_1","Cancer",67
+"cancer_sample_2","Cancer",71
+"cancer_sample_3","Cancer",65
