@@ -2,6 +2,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
+
 getwd()
 gene_ex <- read.table("Data/gene_expression.csv", header = TRUE, sep = ",")
 sample_met <- read.table("Data/sample_metadata.csv", header = TRUE, sep = ",")
@@ -61,3 +62,20 @@ with(merged_data, {
   abline(linear_model)
 })
 # NOTE Again the expression levels looks higher in older patients
+
+## Differential Expression Analysis
+
+t_test_results <- by(
+  merged_data,
+  merged_data$gene_id,
+  function(df) t.test(expression ~ condition, data = df)$p.value
+)
+t_test_results
+t_test <- data.frame(
+  gene_id = names(t_test_results),
+  unadjusted_p_values = unlist(t_test_results)
+)
+t_test$p_adjusted <- p.adjust(t_test$unadjusted_p_values, method = "bonferroni")
+significant_p_values <- t_test %>% filter(p_adjusted <= 0.05)
+
+significant_p_values # NOTE gene 001 and 004 and 005 are significant
