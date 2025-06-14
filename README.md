@@ -1,50 +1,55 @@
 # R-dge-cancer-study
 
-This project analyzes gene expression data in relation to age for cancer studies using R.
+## Objective
+To identify genes with significantly different expression levels between cancer and healthy tissues, aiming to discover potential biomarkers for cancer.
 
-## Getting Started
+## Methods
+Data was tidied and merged from multiple sources to create a unified dataset. Unnecessary columns were removed for clarity. Gene expression data was visualized against age. For each gene, an independent t-test was performed to compare expression between cancer and healthy tissue groups. P-values from these tests were adjusted for multiple comparisons using the Bonferroni method. Key genes of interest were filtered and visualized.
 
-### Prerequisites
+## Results
+Of the five genes analyzed, three (GENE001, GENE004, GENE005) showed a statistically significant increase in expression in cancer tissues compared to healthy tissues (Bonferroni-adjusted p < 0.05). Scatter plots and summary tables were generated for these genes.
 
-- R (version 4.0 or higher recommended)
-- [dplyr](https://cran.r-project.org/web/packages/dplyr/index.html) package (for data manipulation)
-- [ggplot2](https://cran.r-project.org/web/packages/ggplot2/index.html) package (optional, for advanced plotting)
+## Conclusion
+These genes are strong candidates for further biological investigation as potential biomarkers for this cancer type.
 
-### Data Preparation
+---
 
-1. **Merge Data:**  
-   Combine your datasets into a single data frame called `merged_data`.
-
-2. **Drop Columns:**  
-   Remove unnecessary columns using either base R or `dplyr`:
-   ```r
-   # Base R
-   merged_data <- merged_data[ , !(names(merged_data) %in% c("column_to_drop"))]
-
-   # dplyr
-   library(dplyr)
-   merged_data <- merged_data %>% select(-column_to_drop)
-   ```
-
-3. **Plotting Expression vs. Age:**  
-   Visualize the relationship between gene expression and age:
-   ```r
-   # Base R
-   plot(x = merged_data$age, y = merged_data$expression)
-
-   # or using with()
-   with(merged_data, plot(age, expression))
-
-   # or using formula interface
-   plot(expression ~ age, data = merged_data)
-   ```
-
-## Example
+### Example R Workflow
 
 ```r
-# Assuming merged_data is already loaded and cleaned
-plot(expression ~ age, data = merged_data)
+# Data cleaning and filtering
+merged_data <- merged_data %>%
+  filter(!is.na(expression)) %>%
+  select(gene_id, expression, condition, age)
+
+# Statistical testing
+library(dplyr)
+library(purrr)
+t_test_results <- merged_data %>%
+  group_by(gene_id) %>%
+  summarise(
+    t_test = list(t.test(expression ~ condition)),
+    p_value = map_dbl(t_test, "p.value")
+  ) %>%
+  mutate(p_adj = p.adjust(p_value, method = "bonferroni"))
+
+# Selecting significant genes
+significant_genes <- t_test_results %>%
+  filter(p_adj < 0.05) %>%
+  pull(gene_id)
+
+# Filtering for selected genes
+selected_genes <- merged_data %>%
+  filter(gene_id %in% significant_genes)
+
+# Plotting example
+if (!dir.exists("Output")) dir.create("Output")
+png("Output/scatter_plot.png")
+plot(expression ~ age, data = selected_genes)
+dev.off()
 ```
+
+---
 
 ## License
 
